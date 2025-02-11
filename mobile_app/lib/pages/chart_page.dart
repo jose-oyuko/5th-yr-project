@@ -1,6 +1,9 @@
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile_app/components/chat_bubble.dart';
 import 'package:mobile_app/components/my_text_fields.dart';
 import 'package:mobile_app/services/chat/chat_service.dart';
@@ -22,6 +25,78 @@ class _ChartPageState extends State<ChartPage> {
   final TextEditingController _messageController = TextEditingController();
   final ChatService _chatService = ChatService();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final pickedFile = await _picker.pickImage(source: source);
+      if (pickedFile != null) {
+        debugPrint('Pickde file: ${pickedFile.path}');
+      } else {
+        debugPrint('No image selected');
+      }
+    } catch (e) {
+      debugPrint('Error picking image: ${e.toString()}');
+    }
+  }
+
+  void showAttachOptions() {
+    // find the render box of the attach icon
+    final RenderBox button = context.findRenderObject() as RenderBox;
+    // get overlay's render box
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    // compute the global position of the button
+    final Offset buttonPosition =
+        button.localToGlobal(Offset.zero, ancestor: overlay);
+
+    // relative postion of the menu
+    final RelativeRect position = RelativeRect.fromLTRB(
+      buttonPosition.dx,
+      buttonPosition.dy - button.size.height,
+      buttonPosition.dx + button.size.width,
+      buttonPosition.dy,
+    );
+
+    showMenu<String>(
+      context: context,
+      position: position,
+      items: [
+        const PopupMenuItem<String>(
+          value: 'gallary',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.photo_library),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Gallery'),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'camera',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.camera_alt),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Camera'),
+            ],
+          ),
+        )
+      ],
+    ).then((selectedValue) {
+      if (selectedValue == 'gallery') {
+        _pickImage(ImageSource.gallery);
+      } else if (selectedValue == 'camers') {
+        _pickImage(ImageSource.camera);
+      }
+    });
+  }
 
   void sendMessage() async {
     if (_messageController.text.isNotEmpty) {
@@ -109,6 +184,12 @@ class _ChartPageState extends State<ChartPage> {
       padding: const EdgeInsets.symmetric(horizontal: 25.0),
       child: Row(
         children: [
+          IconButton(
+            onPressed: showAttachOptions,
+            icon: const Icon(
+              Icons.attach_file,
+            ),
+          ),
           // text field
           Expanded(
             child: MyTextField(
@@ -122,7 +203,7 @@ class _ChartPageState extends State<ChartPage> {
             onPressed: sendMessage,
             icon: const Icon(
               Icons.arrow_upward,
-              size: 40,
+              // size: 40,
             ),
           ),
         ],
