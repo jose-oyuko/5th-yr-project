@@ -49,12 +49,12 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
-                Icons.message,
+                Icons.smart_toy,
                 size: 80,
               ),
               const SizedBox(height: 25),
               const Text(
-                "Welcome back you've been missed",
+                "Welcome To AgriBot App",
                 style: TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 10),
