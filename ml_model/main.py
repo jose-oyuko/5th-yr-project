@@ -89,6 +89,7 @@ elif(app_mode=="Disease Recognition"):
     if test_image != st.session_state.previous_image:
         st.session_state.prediction = None
         st.session_state.chat_history = []
+        st.session_state.initial_advice = None
         st.session_state.previous_image = test_image
     
     if(st.button("Show Image")):
@@ -99,6 +100,8 @@ elif(app_mode=="Disease Recognition"):
         st.session_state.prediction = None
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
+    if 'initial_advice' not in st.session_state:
+        st.session_state.initial_advice = None
     
     #Predict button
     if(st.button("Predict")):
@@ -123,22 +126,25 @@ elif(app_mode=="Disease Recognition"):
             # Automatically get advice after prediction
             with st.spinner('Fetching advice...'):
                 advice = gpt_advice(prediction)
-            st.info("Advice for {}:".format(prediction))
-            st.write(advice)
-            # Add initial advice to chat history
-            st.session_state.chat_history.append({"role": "assistant", "content": advice})
+                st.session_state.initial_advice = advice
+    
+    # Display initial advice if it exists
+    if st.session_state.initial_advice is not None:
+        st.info("Advice for {}:".format(st.session_state.prediction))
+        st.write(st.session_state.initial_advice)
     
     # Chat interface - only show if we have a prediction
     if st.session_state.prediction is not None:
         st.markdown("---")
         st.subheader("Ask Follow-up Questions")
         
-        # Display chat history
-        for message in st.session_state.chat_history:
-            if message["role"] == "user":
-                st.chat_message("user").write(message["content"])
-            else:
-                st.chat_message("assistant").write(message["content"])
+        # Display chat history only if there are follow-up questions
+        if st.session_state.chat_history:
+            for message in st.session_state.chat_history:
+                if message["role"] == "user":
+                    st.chat_message("user").write(message["content"])
+                else:
+                    st.chat_message("assistant").write(message["content"])
         
         # Chat input
         if prompt := st.chat_input("Ask a follow-up question"):
