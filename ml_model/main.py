@@ -127,6 +127,8 @@ elif(app_mode=="Disease Recognition"):
             with st.spinner('Fetching advice...'):
                 advice = gpt_advice(prediction)
                 st.session_state.initial_advice = advice
+                # Add initial advice to chat history
+                st.session_state.chat_history.append({"role": "assistant", "content": advice})
     
     # Display initial advice if it exists
     if st.session_state.initial_advice is not None:
@@ -151,9 +153,12 @@ elif(app_mode=="Disease Recognition"):
             # Add user message to chat history
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             
-            # Get response from gpt_advice
+            # Get response from gpt_advice with full context
             with st.spinner('Thinking...'):
-                response = gpt_advice(prompt)
+                # Create context string from chat history
+                context = "\n".join([f"{'User' if msg['role'] == 'user' else 'Assistant'}: {msg['content']}" 
+                                   for msg in st.session_state.chat_history])
+                response = gpt_advice(context)
             
             # Add assistant response to chat history
             st.session_state.chat_history.append({"role": "assistant", "content": response})
