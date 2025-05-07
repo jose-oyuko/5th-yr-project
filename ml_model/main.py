@@ -1,6 +1,25 @@
 import streamlit as st
 import tensorflow as tf
 import numpy as np
+import requests
+
+def gpt_advice(disease_name):
+    url = "https://payload.vextapp.com/hook/XJOWCO5HU5/catch/hello"
+    headers = {
+        "Content-Type": "application/json",
+        "ApiKey": "Api-Key W315hWGM.cdAgsdg8IyShB1boucXsv84LMwKtgUVq"
+    }
+    data = {
+    "payload": disease_name
+}
+    response = requests.post(url, headers=headers, json=data)
+    if response.status_code == 200:
+        response_data = response.json()
+        advice = response_data.get("text", "No advice found.")
+        
+        return advice
+    else:
+        return "Error: Unable to fetch advice."
 
 
 #Tensorflow Model Prediction
@@ -64,6 +83,11 @@ elif(app_mode=="Disease Recognition"):
     test_image = st.file_uploader("Choose an Image:")
     if(st.button("Show Image")):
         st.image(test_image,width=4,use_column_width=True)
+    
+    # Initialize session state for prediction if it doesn't exist
+    if 'prediction' not in st.session_state:
+        st.session_state.prediction = None
+    
     #Predict button
     if(st.button("Predict")):
         # st.snow()
@@ -80,4 +104,14 @@ elif(app_mode=="Disease Recognition"):
  'Tomato__Tomato_YellowLeaf__Curl_Virus',
  'Tomato__Tomato_mosaic_virus',
  'Tomato_healthy']
-        st.success("Model is Predicting it's a {}".format(class_name[result_index]))
+        prediction = class_name[result_index]
+        st.session_state.prediction = prediction
+        st.success("Model is Predicting it's a {}".format(prediction))
+    
+    # Get Advice button - outside the Predict block
+    if st.session_state.prediction is not None:
+        if st.button("Get Advice"):
+            with st.spinner('Fetching advice...'):
+                advice = gpt_advice(st.session_state.prediction)
+            st.info("Advice for {}:".format(st.session_state.prediction))
+            st.write(advice)
