@@ -1,0 +1,7 @@
+/ml_data
+/ml_model/venv
+/back-end app
+/ml_model/__pycache__
+/ml_model/*.pyc
+
+/ml_model/model.h5

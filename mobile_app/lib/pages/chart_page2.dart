@@ -21,8 +21,8 @@ class _ChatPageState extends State<ChatPage> {
     firstName: 'agri',
     lastName: 'bot',
   );
-  List<ChatMessage> _messages = <ChatMessage>[];
-  List<ChatUser> _typingUsers = <ChatUser>[];
+  final List<ChatMessage> _messages = <ChatMessage>[];
+  final List<ChatUser> _typingUsers = <ChatUser>[];
 
   Future<Map<String, dynamic>?> postRequest(msg) async {
     // Define the URL endpoint.
@@ -107,7 +107,7 @@ class _ChatPageState extends State<ChatPage> {
       _messages.insert(0, m);
       _typingUsers.add(_gptChatUser);
     });
-    Iterable<Map<String, dynamic>?> _messageHistory =
+    Iterable<Map<String, dynamic>?> messageHistory =
         _messages.reversed.map((m) {
       if (m.user == _currentUser) {
         return {'role': 'user', 'context': m.text};
@@ -115,7 +115,7 @@ class _ChatPageState extends State<ChatPage> {
         return {'role': 'assistant', 'context': m.text};
       }
     }).toList();
-    final request = await postRequest(_messageHistory);
+    final request = await postRequest(messageHistory);
     if (request != null) {
       setState(() {
         _messages.insert(
