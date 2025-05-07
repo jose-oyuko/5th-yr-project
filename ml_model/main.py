@@ -81,20 +81,32 @@ elif(app_mode=="About"):
 elif(app_mode=="Disease Recognition"):
     st.header("Disease Recognition")
     test_image = st.file_uploader("Choose an Image:")
+    
+    # Clear session state when a new image is uploaded
+    if 'previous_image' not in st.session_state:
+        st.session_state.previous_image = None
+    
+    if test_image != st.session_state.previous_image:
+        st.session_state.prediction = None
+        st.session_state.chat_history = []
+        st.session_state.previous_image = test_image
+    
     if(st.button("Show Image")):
         st.image(test_image,width=4,use_column_width=True)
     
-    # Initialize session state for prediction if it doesn't exist
+    # Initialize session state for prediction and chat history
     if 'prediction' not in st.session_state:
         st.session_state.prediction = None
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = []
     
     #Predict button
     if(st.button("Predict")):
-        # st.snow()
-        st.write("Our Prediction")
-        result_index = model_prediction(test_image)
-        #Reading Labels
-        class_name = ['Tomato_Bacterial_spot',
+        with st.spinner('Analyzing image...'):
+            st.write("Our Prediction")
+            result_index = model_prediction(test_image)
+            #Reading Labels
+            class_name = ['Tomato_Bacterial_spot',
  'Tomato_Early_blight',
  'Tomato_Late_blight',
  'Tomato_Leaf_Mold',
@@ -104,14 +116,41 @@ elif(app_mode=="Disease Recognition"):
  'Tomato__Tomato_YellowLeaf__Curl_Virus',
  'Tomato__Tomato_mosaic_virus',
  'Tomato_healthy']
-        prediction = class_name[result_index]
-        st.session_state.prediction = prediction
-        st.success("Model is Predicting it's a {}".format(prediction))
-    
-    # Get Advice button - outside the Predict block
-    if st.session_state.prediction is not None:
-        if st.button("Get Advice"):
+            prediction = class_name[result_index]
+            st.session_state.prediction = prediction
+            st.success("Model is Predicting it's a {}".format(prediction))
+            
+            # Automatically get advice after prediction
             with st.spinner('Fetching advice...'):
-                advice = gpt_advice(st.session_state.prediction)
-            st.info("Advice for {}:".format(st.session_state.prediction))
+                advice = gpt_advice(prediction)
+            st.info("Advice for {}:".format(prediction))
             st.write(advice)
+            # Add initial advice to chat history
+            st.session_state.chat_history.append({"role": "assistant", "content": advice})
+    
+    # Chat interface - only show if we have a prediction
+    if st.session_state.prediction is not None:
+        st.markdown("---")
+        st.subheader("Ask Follow-up Questions")
+        
+        # Display chat history
+        for message in st.session_state.chat_history:
+            if message["role"] == "user":
+                st.chat_message("user").write(message["content"])
+            else:
+                st.chat_message("assistant").write(message["content"])
+        
+        # Chat input
+        if prompt := st.chat_input("Ask a follow-up question"):
+            # Add user message to chat history
+            st.session_state.chat_history.append({"role": "user", "content": prompt})
+            
+            # Get response from gpt_advice
+            with st.spinner('Thinking...'):
+                response = gpt_advice(prompt)
+            
+            # Add assistant response to chat history
+            st.session_state.chat_history.append({"role": "assistant", "content": response})
+            
+            # Rerun to update the chat display
+            st.rerun()
